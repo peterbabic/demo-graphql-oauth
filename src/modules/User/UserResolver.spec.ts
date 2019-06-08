@@ -1,4 +1,4 @@
-import { callSchema } from "../callSchema";
+import { callSchema } from "../../utils/callSchema";
 
 const usersQuery = `
 query {
@@ -8,7 +8,7 @@ query {
 }`
 
 describe("user resolver", () => {
-    it("should return an empty array when no users are in sample", async () => {
+    it("should return an empty array when no users are created", async () => {
         const response = await callSchema({
             source: usersQuery,
         })

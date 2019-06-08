@@ -1,6 +1,6 @@
 import { ApolloServer } from "apollo-server";
 import { buildSchema } from "type-graphql";
-import { UserResolver } from "./User/UserResolver";
+import { UserResolver } from "./modules/User/UserResolver";
 
 const PORT = process.env.PORT || 4000
 
