@@ -1,13 +1,13 @@
-import "reflect-metadata"
-import { Resolver, Query } from "type-graphql"
-import { User } from "../User"
+import "reflect-metadata";
+import { Query, Resolver } from "type-graphql";
+import { User } from "../User";
 
 @Resolver()
 export class UserResolver {
-    private recipesCollection: User[] = []
+    private usersCollection: User[] = []
 
     @Query(returns => [User])
     async users() {
-        return await this.recipesCollection
+        return await this.usersCollection
     }
 }

@@ -4,7 +4,8 @@
     "description": "",
     "main": "src/app.js",
     "scripts": {
-        "dev": "ts-node-dev --respawn src/app.ts"
+        "dev": "ts-node-dev --respawn src/app.ts",
+        "test": "jest"
     },
     "keywords": [],
     "author": "",
@@ -17,6 +18,10 @@
     },
     "devDependencies": {
         "@types/graphql": "^14.2.0",
+        "@types/jest": "^24.0.13",
+        "class-transformer": "^0.2.3",
+        "jest": "^24.8.0",
+        "ts-jest": "^24.0.2",
         "ts-node-dev": "^1.0.0-pre.39",
         "typescript": "^3.5.1"
     }
