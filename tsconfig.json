@@ -1,17 +1,20 @@
 {
     "compilerOptions": {
-        "target": "es2016",
+        "target": "es2017",
+        // "lib": ["es2017"],
         "module": "commonjs",
-        "lib": ["es2016", "esnext.asynciterable"],
-        "esModuleInterop": true,
-        // "allowSyntheticDefaultImports": true
+
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
+
+        // noImplicitAny, noImplicitThis, alwaysStrict, strictBindCallApply, 
+        // strictNullChecks, strictFunctionTypes, strictPropertyInitialization
         "strict": true,
-        "noImplicitAny": true,
         "noImplicitReturns": true,
-        "noImplicitThis": true,
-        "noUnusedLocals": true
-        // "noUnusedParameters": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+
+        // needed for faker
+        "esModuleInterop": true
     }
 }
