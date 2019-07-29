@@ -5,29 +5,35 @@
     "main": "src/app.js",
     "scripts": {
         "dev": "ts-node-dev --respawn src/app.ts",
-        "test": "jest"
+        "test": "jest --watch",
+        "gen:key": "ssh-keygen -t rsa -b 2048 -f src/utils/keys/jwtRS256.key && openssl rsa -in src/utils/keys/jwtRS256.key -pubout -outform PEM -out src/utils/keys/jwtRS256.key.pub"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "apollo-server": "^2.6.2",
-        "graphql": "^14.3.1",
+        "apollo-server": "^2.9.3",
+        "argon2": "^0.24.1",
+        "dotenv": "^8.1.0",
+        "graphql": "^14.5.4",
+        "jsonwebtoken": "^8.5.1",
+        "pg": "^7.12.1",
         "reflect-metadata": "^0.1.13",
-        "type-graphql": "^0.17.4",
+        "type-graphql": "^0.17.5",
         "typeorm": "^0.2.18"
     },
     "devDependencies": {
         "@types/faker": "^4.1.5",
-        "@types/graphql": "^14.2.0",
-        "@types/jest": "^24.0.13",
-        "@types/node": "^12.0.12",
+        "@types/graphql": "^14.5.0",
+        "@types/jest": "^24.0.18",
+        "@types/js-cookie": "^2.2.2",
+        "@types/jsonwebtoken": "^8.3.3",
+        "@types/node": "^12.7.5",
         "class-transformer": "^0.2.3",
         "faker": "^4.1.0",
-        "jest": "^24.8.0",
-        "sqlite3": "^4.0.9",
-        "ts-jest": "^24.0.2",
-        "ts-node-dev": "^1.0.0-pre.39",
-        "typescript": "^3.5.1"
+        "jest": "^24.9.0",
+        "ts-jest": "^24.1.0",
+        "ts-node-dev": "^1.0.0-pre.42",
+        "typescript": "^3.6.3"
     }
 }

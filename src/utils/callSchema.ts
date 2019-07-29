@@ -1,13 +1,10 @@
-import { graphql, GraphQLSchema } from "graphql"
-import { createSchema } from "./createSchema"
+import { graphql, GraphQLSchema } from "graphql";
+import { createSchema } from "./createSchema";
 
-interface Options {
-    source: string
-}
 
 let schema: GraphQLSchema
 
-export const callSchema = async ({ source }: Options) => {
+export const callSchema = async ( source : string) => {
     if (!schema) {
         schema = await createSchema()
     }
