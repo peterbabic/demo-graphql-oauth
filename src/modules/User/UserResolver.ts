@@ -1,5 +1,5 @@
 import "reflect-metadata"
-import { Arg, Mutation, Query, Resolver } from "type-graphql"
+import { Arg, Authorized, Mutation, Query, Resolver } from "type-graphql"
 import * as argon2 from "../../utils/argon2"
 import * as jwt from "../../utils/jwt"
 import { User } from "../User"
@@ -30,6 +30,15 @@ export class UserResolver {
 
         const token = jwt.signWithRS256({ userId: user.id })
         return token
+    }
+
+    @Query(() => User)
+    @Authorized()
+    async me() {
+        const user = User.create({
+            email: "asddsf@fdsfs.sk",
+        })
+        return user
     }
 
     @Mutation(() => User)
