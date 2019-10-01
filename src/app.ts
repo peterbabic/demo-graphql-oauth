@@ -1,37 +1,26 @@
 require("dotenv").config()
 import { ApolloServer } from "apollo-server-express"
 import { createConnection } from "typeorm"
-import { createSchema } from "./schema"
-import { User } from "./User"
+import { connectionOptions, createSchema } from "./app/schema"
 import express = require("express")
-
 ;(async () => {
-    await createConnection({
-        type: "postgres",
-        host: "localhost",
-        port: 5432,
-        database: "postgres",
-        username: "postgres",
-        password: "postgres",
-        // dropSchema: true,
-        entities: [User],
-        synchronize: true,
-        logging: false,
-    })
+	await createConnection(connectionOptions)
 
-    const server = new ApolloServer({
-        schema: await createSchema(),
-        playground: true,
-        introspection: true,
-        debug: true,
-        context: ({ req, res }) => ({ req, res }),
-    })
+	const server = new ApolloServer({
+		schema: await createSchema(),
+		playground: true,
+		introspection: true,
+		debug: true,
+		context: ({ req, res }) => ({ req, res }),
+	})
 
-    const app = express()
-    server.applyMiddleware({ app })
+	const app = express()
+	server.applyMiddleware({ app })
 
-    const PORT = process.env.PORT || 4000
-    app.listen({ port: PORT }, () =>
-        console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}.    `)
-    )
+	const APP_PORT = process.env.APP_PORT || 4000
+	app.listen({ port: APP_PORT }, () =>
+		console.log(
+			`🚀 Server ready at http://localhost:${APP_PORT}${server.graphqlPath}.    `
+		)
+	)
 })()

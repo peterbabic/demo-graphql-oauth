@@ -1,22 +1,12 @@
 import { gql } from "apollo-server"
 import { createConnection, getConnection } from "typeorm"
-import { signToken, verifyToken } from "../auth"
-import { callSchema } from "../schema"
-import { User } from "../User"
+import { callSchema, connectionOptions } from "./schema"
+import { signToken, verifyToken } from "./userResolver/auth"
+import { Tokens } from "./userResolver/Tokens"
+import { User } from "./userResolver/User"
 
 beforeAll(async () => {
-	return await createConnection({
-		type: "postgres",
-		host: "localhost",
-		port: 5432,
-		database: "testing",
-		username: "postgres",
-		password: "postgres",
-		// dropSchema: true,
-		entities: [User],
-		synchronize: true,
-		logging: false,
-	})
+	return await createConnection(connectionOptions)
 })
 
 afterAll(async () => {
@@ -70,16 +60,17 @@ describe("resolver of user", () => {
 		})
 	})
 
-	describe("loginTokens query should", () => {
-		const loginTokensQuery = gql`
+	describe("tokens query should", () => {
+		const tokensQuery = gql`
 			query {
-				loginTokens(email: "email@email.com", password: "good-password") {
+				tokens(email: "email@email.com", password: "good-password") {
 					accessToken
 				}
 			}
 		`
+
 		it("return error for non-existent user", async () => {
-			const response = await callSchema(loginTokensQuery)
+			const response = await callSchema(tokensQuery)
 
 			expect(response.errors).not.toBeUndefined()
 			expect(response.data).toBeNull()
@@ -91,7 +82,7 @@ describe("resolver of user", () => {
 				password: "BAD-password",
 			}).save()
 
-			const response = await callSchema(loginTokensQuery)
+			const response = await callSchema(tokensQuery)
 
 			expect(response.errors).not.toBeUndefined()
 			expect(response.data).toBeNull()
@@ -103,9 +94,13 @@ describe("resolver of user", () => {
 				password: "good-password",
 			}).save()
 
-			const response = await callSchema(loginTokensQuery)
-			const token = response.data!.loginTokens.accessToken
+			const response = await callSchema(tokensQuery)
+			const token = response.data!.tokens.accessToken
+			const tokens = new Tokens()
+			tokens.accessToken = token
 
+			expect(response.errors).toBeUndefined()
+			expect(response.data).toMatchObject({ tokens })
 			expect(verifyToken(token)).toBeTruthy()
 		})
 	})
@@ -120,7 +115,14 @@ describe("resolver of user", () => {
 		`
 
 		it("return an error without a valid jwt token", async () => {
-			const response = await callSchema(meQuery)
+			const context = {
+				req: {
+					headers: {
+						authorization: "Bearer INVALID-TOKEN",
+					},
+				},
+			}
+			const response = await callSchema(meQuery, context)
 
 			expect(response.errors).not.toBeUndefined()
 			expect(response.data).toBeNull()
