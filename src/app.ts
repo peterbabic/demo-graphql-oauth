@@ -1,13 +1,11 @@
 require("dotenv").config()
-import { ApolloServer } from "apollo-server"
+import { ApolloServer } from "apollo-server-express"
 import { createConnection } from "typeorm"
-import { User } from "./modules/User"
-import { createSchema } from "./utils/createSchema"
+import { createSchema } from "./schema"
+import { User } from "./User"
+import express = require("express")
 
-const PORT = process.env.PORT || 4000
-
-async function bootstrap() {
-
+;(async () => {
     await createConnection({
         type: "postgres",
         host: "localhost",
@@ -21,18 +19,19 @@ async function bootstrap() {
         logging: false,
     })
 
-    // ... Building schema here
-    const schema = await createSchema()
-
-    // Create the GraphQL server
     const server = new ApolloServer({
-        schema,
+        schema: await createSchema(),
         playground: true,
+        introspection: true,
+        debug: true,
+        context: ({ req, res }) => ({ req, res }),
     })
 
-    // Start the server
-    const { url } = await server.listen(PORT)
-    console.log(`Server is running, GraphQL Playground available at ${url}`)
-}
+    const app = express()
+    server.applyMiddleware({ app })
 
-bootstrap()
+    const PORT = process.env.PORT || 4000
+    app.listen({ port: PORT }, () =>
+        console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}.    `)
+    )
+})()
