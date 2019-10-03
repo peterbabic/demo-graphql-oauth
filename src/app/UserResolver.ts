@@ -1,7 +1,7 @@
 import "reflect-metadata"
 import { Arg, Authorized, Ctx, Mutation, Query } from "type-graphql"
 import { comparePassword, MyContext, signToken } from "./userResolver/auth"
-import { Tokens } from "./userResolver/Tokens"
+import { LoginTokens } from "./userResolver/LoginTokens"
 import { User } from "./userResolver/User"
 
 export class UserResolver {
@@ -10,11 +10,11 @@ export class UserResolver {
 		return await User.find()
 	}
 
-	@Query(() => Tokens)
-	async tokens(
+	@Query(() => LoginTokens)
+	async loginTokens(
 		@Arg("email") email: string,
 		@Arg("password") password: string
-	): Promise<Tokens> {
+	): Promise<LoginTokens> {
 		try {
 			const user = await User.findOne({ where: { email } })
 

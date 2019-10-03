@@ -1,12 +1,12 @@
 import { gql } from "apollo-server"
 import { createConnection, getConnection } from "typeorm"
-import { callSchema, connectionOptions } from "./schema"
+import { callSchema, connectionOptionsforDB } from "./schema"
 import { signToken, verifyToken } from "./userResolver/auth"
-import { Tokens } from "./userResolver/Tokens"
+import { LoginTokens } from "./userResolver/LoginTokens"
 import { User } from "./userResolver/User"
 
 beforeAll(async () => {
-	return await createConnection(connectionOptions)
+	return await createConnection(connectionOptionsforDB("testing"))
 })
 
 afterAll(async () => {
@@ -60,17 +60,17 @@ describe("resolver of user", () => {
 		})
 	})
 
-	describe("tokens query should", () => {
-		const tokensQuery = gql`
+	describe("loginTokens query should", () => {
+		const loginTokensQuery = gql`
 			query {
-				tokens(email: "email@email.com", password: "good-password") {
+				loginTokens(email: "email@email.com", password: "good-password") {
 					accessToken
 				}
 			}
 		`
 
 		it("return error for non-existent user", async () => {
-			const response = await callSchema(tokensQuery)
+			const response = await callSchema(loginTokensQuery)
 
 			expect(response.errors).not.toBeUndefined()
 			expect(response.data).toBeNull()
@@ -82,7 +82,7 @@ describe("resolver of user", () => {
 				password: "BAD-password",
 			}).save()
 
-			const response = await callSchema(tokensQuery)
+			const response = await callSchema(loginTokensQuery)
 
 			expect(response.errors).not.toBeUndefined()
 			expect(response.data).toBeNull()
@@ -94,14 +94,14 @@ describe("resolver of user", () => {
 				password: "good-password",
 			}).save()
 
-			const response = await callSchema(tokensQuery)
-			const token = response.data!.tokens.accessToken
-			const tokens = new Tokens()
-			tokens.accessToken = token
+			const response = await callSchema(loginTokensQuery)
+			const accessToken = response.data!.loginTokens.accessToken
+			const loginTokens = new LoginTokens()
+			loginTokens.accessToken = accessToken
 
 			expect(response.errors).toBeUndefined()
-			expect(response.data).toMatchObject({ tokens })
-			expect(verifyToken(token)).toBeTruthy()
+			expect(response.data).toMatchObject({ loginTokens })
+			expect(verifyToken(accessToken)).toBeTruthy()
 		})
 	})
 

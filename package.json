@@ -5,7 +5,8 @@
 	"main": "src/app.js",
 	"scripts": {
 		"dev": "ts-node-dev --respawn src/app.ts",
-		"test": "jest -i --coverage",
+		"test": "jest --coverage",
+		"test:debug": "jest -i --verbose --detectOpenHandles",
 		"test:watch": "jest -i --watch",
 		"gen:key": "ssh-keygen -t rsa -b 2048 -f src/app/userResolver/auth/jwtRS256.key && openssl rsa -in src/app/userResolver/auth/wtRS256.key -pubout -outform PEM -out src/app/userResolver/auth/wtRS256.key.pub"
 	},
@@ -29,7 +30,6 @@
 		"@types/express": "^4.17.1",
 		"@types/graphql": "^14.5.0",
 		"@types/jest": "^24.0.18",
-		"@types/js-cookie": "^2.2.2",
 		"@types/jsonwebtoken": "^8.3.3",
 		"@types/node": "^12.7.5",
 		"class-transformer": "^0.2.3",

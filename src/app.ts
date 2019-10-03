@@ -1,10 +1,10 @@
 require("dotenv").config()
 import { ApolloServer } from "apollo-server-express"
 import { createConnection } from "typeorm"
-import { connectionOptions, createSchema } from "./app/schema"
+import { connectionOptionsforDB, createSchema } from "./app/schema"
 import express = require("express")
 ;(async () => {
-	await createConnection(connectionOptions)
+	await createConnection(connectionOptionsforDB())
 
 	const server = new ApolloServer({
 		schema: await createSchema(),
@@ -17,10 +17,9 @@ import express = require("express")
 	const app = express()
 	server.applyMiddleware({ app })
 
-	const APP_PORT = process.env.APP_PORT || 4000
-	app.listen({ port: APP_PORT }, () =>
+	app.listen({ port: process.env.APP_PORT }, () =>
 		console.log(
-			`🚀 Server ready at http://localhost:${APP_PORT}${server.graphqlPath}.    `
+			`Server ready at http://localhost:${process.env.APP_PORT}${server.graphqlPath}`
 		)
 	)
 })()

@@ -43,13 +43,13 @@ export const verifyToken = (token: string) => {
 export const customAuthChecker: AuthChecker<MyContext> = ({ context }) => {
 	try {
 		const authHeader = context.req.headers["authorization"]
-		const token = authHeader!.split(" ")[1]
-		const payload = verifyToken(token)
+		const accessToken = authHeader!.split(" ")[1]
+		const payload = verifyToken(accessToken)
 		context.payload = payload as any
 
 		return true
 	} catch (error) {
-		throw new Error("the valid authorization header is required")
+		throw new Error("the valid authorization header is required: ")
 	}
 }
 
