@@ -4,11 +4,12 @@
 	"description": "",
 	"main": "src/app.js",
 	"scripts": {
-		"dev": "ts-node-dev --respawn src/app.ts",
+		"dev": "ts-node-dev --respawn src/bootstrap.ts",
 		"test": "jest --coverage",
 		"test:debug": "jest -i --verbose --detectOpenHandles",
 		"test:watch": "jest -i --watch",
-		"gen:key": "ssh-keygen -t rsa -b 2048 -f src/app/userResolver/auth/jwtRS256.key && openssl rsa -in src/app/userResolver/auth/wtRS256.key -pubout -outform PEM -out src/app/userResolver/auth/wtRS256.key.pub"
+		"gen:key": "ssh-keygen -t rsa -b 2048 -f src/app/userResolver/auth/jwtRS256.key && openssl rsa -in src/app/userResolver/auth/wtRS256.key -pubout -outform PEM -out src/app/userResolver/auth/wtRS256.key.pub",
+		"debug": "ts-node-dev --inspect --respawn --transpileOnly src/bootstrap.ts"
 	},
 	"keywords": [],
 	"author": "",
@@ -33,6 +34,7 @@
 		"@types/jsonwebtoken": "^8.3.3",
 		"@types/node": "^12.7.5",
 		"class-transformer": "^0.2.3",
+		"isomorphic-fetch": "^2.2.1",
 		"jest": "^24.9.0",
 		"ts-jest": "^24.1.0",
 		"ts-node-dev": "^1.0.0-pre.42",

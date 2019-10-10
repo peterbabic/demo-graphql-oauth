@@ -49,8 +49,10 @@ export const customAuthChecker: AuthChecker<MyContext> = ({ context }) => {
 
 		return true
 	} catch (error) {
-		throw new Error("the valid authorization header is required: ")
+		throw new Error("the valid authorization header is required: " + error)
 	}
 }
+
+export const contextFunction = ({ req, res }: MyContext) => ({ req, res })
 
 const readKeyFile = (fileName: string) => readFileSync(join(__dirname, "auth", fileName))

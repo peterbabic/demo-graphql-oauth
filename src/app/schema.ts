@@ -26,12 +26,12 @@ export const createSchema = () =>
 		authChecker: customAuthChecker,
 	})
 
-export const connectionOptionsforDB = (dbName?: string) => {
+export const connectionOptionsforTesting = () => {
 	let connectionOptions: ConnectionOptions = {
 		type: "postgres",
 		host: process.env.DB_HOST,
 		port: 5432,
-		database: dbName || process.env.DB_NAME,
+		database: "testing",
 		username: process.env.DB_USER,
 		password: process.env.DB_PASS,
 		entities: [User],

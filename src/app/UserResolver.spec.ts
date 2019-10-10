@@ -1,12 +1,12 @@
 import { gql } from "apollo-server"
 import { createConnection, getConnection } from "typeorm"
-import { callSchema, connectionOptionsforDB } from "./schema"
+import { callSchema, connectionOptionsforTesting } from "./schema"
 import { signToken, verifyToken } from "./userResolver/auth"
 import { LoginTokens } from "./userResolver/LoginTokens"
 import { User } from "./userResolver/User"
 
 beforeAll(async () => {
-	return await createConnection(connectionOptionsforDB("testing"))
+	return await createConnection(connectionOptionsforTesting())
 })
 
 afterAll(async () => {

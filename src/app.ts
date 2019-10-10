@@ -1,25 +1,23 @@
-require("dotenv").config()
-import { ApolloServer } from "apollo-server-express"
-import { createConnection } from "typeorm"
-import { connectionOptionsforDB, createSchema } from "./app/schema"
 import express = require("express")
-;(async () => {
-	await createConnection(connectionOptionsforDB())
+import { ApolloServer } from "apollo-server-express"
+import { ConnectionOptions, createConnection } from "typeorm"
+import { createSchema } from "./app/schema"
+import { contextFunction } from "./app/userResolver/auth"
+
+export const bootstrap = async (connectionOptions: ConnectionOptions, port: number) => {
+	await createConnection(connectionOptions)
 
 	const server = new ApolloServer({
 		schema: await createSchema(),
 		playground: true,
 		introspection: true,
 		debug: true,
-		context: ({ req, res }) => ({ req, res }),
+		context: contextFunction,
 	})
 
 	const app = express()
 	server.applyMiddleware({ app })
+	app.listen({ port })
 
-	app.listen({ port: process.env.APP_PORT }, () =>
-		console.log(
-			`Server ready at http://localhost:${process.env.APP_PORT}${server.graphqlPath}`
-		)
-	)
-})()
+	return server
+}
