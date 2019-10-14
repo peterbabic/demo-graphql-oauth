@@ -1,20 +1,19 @@
 import { gql } from "apollo-server"
 import { Request, Response } from "express"
 import { createConnection, getConnection } from "typeorm"
-import {
-	initializeTransactionalContext,
-	patchTypeORMRepositoryWithBaseRepository,
-} from "typeorm-transactional-cls-hooked"
 import { callSchema } from "./schema"
-import { runInTransaction, testingConnectionOptions } from "./testing"
-import { ContextInterface, signAccessToken, verifyAccessToken } from "./userResolver/auth"
+import {
+	initializeRollbackTransactions,
+	runInRollbackTransaction,
+	testingConnectionOptions,
+} from "./testing"
+import { signAccessToken, verifyAccessToken } from "./userResolver/auth"
+import { ContextInterface } from "./userResolver/ContextInterface"
 import { LoginTokens } from "./userResolver/LoginTokens"
 import { User } from "./userResolver/User"
 
 beforeAll(async () => {
-	initializeTransactionalContext()
-	patchTypeORMRepositoryWithBaseRepository()
-
+	initializeRollbackTransactions()
 	await createConnection(testingConnectionOptions())
 })
 
@@ -26,7 +25,7 @@ describe("resolver of user", () => {
 	describe("createUser mutation should", () => {
 		it(
 			"return email as it creates user with mutation",
-			runInTransaction(async () => {
+			runInRollbackTransaction(async () => {
 				const createUserMutation = gql`
 					mutation {
 						createUser(email: "email@email.com", password: "password") {
@@ -48,7 +47,7 @@ describe("resolver of user", () => {
 	describe("users query should", () => {
 		it(
 			"return emails of registered users",
-			runInTransaction(async () => {
+			runInRollbackTransaction(async () => {
 				const usersQuery = gql`
 					query {
 						users {
@@ -82,7 +81,7 @@ describe("resolver of user", () => {
 
 		it(
 			"return error for non-existent user",
-			runInTransaction(async () => {
+			runInRollbackTransaction(async () => {
 				const response = await callSchema(loginTokensQuery)
 
 				expect(response.errors).not.toBeUndefined()
@@ -92,7 +91,7 @@ describe("resolver of user", () => {
 
 		it(
 			"return error for bad password",
-			runInTransaction(async () => {
+			runInRollbackTransaction(async () => {
 				await User.create({
 					email: "email@email.com",
 					password: "BAD-password",
@@ -107,7 +106,7 @@ describe("resolver of user", () => {
 
 		it(
 			"return a valid access token with good credentials",
-			runInTransaction(async () => {
+			runInRollbackTransaction(async () => {
 				await User.create({
 					email: "email@email.com",
 					password: "good-password",
@@ -115,12 +114,17 @@ describe("resolver of user", () => {
 
 				const response = await callSchema(loginTokensQuery)
 				const accessToken = response.data!.loginTokens.accessToken
+				const accessTokenPayload = verifyAccessToken(accessToken)
 				const loginTokens = new LoginTokens()
 				loginTokens.accessToken = accessToken
 
+				const fifteenMinutes = 900
+				const accessTokenLifetime =
+					accessTokenPayload.exp! - accessTokenPayload.iat!
+				expect(accessTokenLifetime).toBe(fifteenMinutes)
+				expect(accessTokenPayload).toBeTruthy()
 				expect(response.errors).toBeUndefined()
 				expect(response.data).toMatchObject({ loginTokens })
-				expect(verifyAccessToken(accessToken)).toBeTruthy()
 			})
 		)
 	})
@@ -136,7 +140,7 @@ describe("resolver of user", () => {
 
 		it(
 			"return an error without a valid jwt token",
-			runInTransaction(async () => {
+			runInRollbackTransaction(async () => {
 				const contextWithInvalidToken = contextWithAuthHeader(
 					"Bearer INVALID-TOKEN"
 				)
@@ -149,7 +153,7 @@ describe("resolver of user", () => {
 
 		it(
 			"return an user with a valid jwt token",
-			runInTransaction(async () => {
+			runInRollbackTransaction(async () => {
 				const user = await User.create({
 					email: "email@email.com",
 				}).save()

@@ -1,16 +1,16 @@
 import { argon2id, hash, verify as argonVerify } from "argon2"
-import { Request, Response } from "express"
 import { sign, verify as jwtVerify } from "jsonwebtoken"
 import { AuthChecker } from "type-graphql"
+import { ContextInterface } from "./ContextInterface"
 
-export type Payload = {
+export type ContextPayload = {
 	userId: number
 }
 
-export interface ContextInterface {
-	req: Request
-	res: Response
-	payload?: Payload
+type AccessTokenPayload = {
+	userId: number
+	iat: number
+	exp?: number
 }
 
 export const hashPassword = async (password: string) =>
@@ -19,20 +19,26 @@ export const hashPassword = async (password: string) =>
 export const comparePassword = async (hash: string, plain: string) =>
 	await argonVerify(hash, plain, { type: argon2id })
 
-export const signAccessToken = (payload: Payload) => {
-	return sign(payload, process.env.ACCESS_SECRET!)
+export const signAccessToken = (payload: ContextPayload) => {
+	const accessTokenSecret = process.env.ACCESS_SECRET as string
+
+	return sign(payload, accessTokenSecret, {
+		expiresIn: process.env.ACCESS_EXP,
+	})
 }
 
 export const verifyAccessToken = (token: string) => {
-	return jwtVerify(token, process.env.ACCESS_SECRET!)
+	const accessTokenSecret = process.env.ACCESS_SECRET as string
+
+	return jwtVerify(token, accessTokenSecret) as AccessTokenPayload
 }
 
 export const customAuthChecker: AuthChecker<ContextInterface> = ({ context }) => {
 	try {
 		const authHeader = context.req.headers["authorization"]
 		const accessToken = authHeader!.split(" ")[1]
-		const payload = verifyAccessToken(accessToken)
-		context.payload = payload as any
+		const accessTokenPayload = verifyAccessToken(accessToken)
+		context.payload = accessTokenPayload as ContextPayload
 
 		return true
 	} catch (error) {

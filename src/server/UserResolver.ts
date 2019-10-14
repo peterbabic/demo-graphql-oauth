@@ -1,6 +1,7 @@
 import "reflect-metadata"
 import { Arg, Authorized, Ctx, Mutation, Query } from "type-graphql"
-import { comparePassword, ContextInterface, signAccessToken } from "./userResolver/auth"
+import { comparePassword, signAccessToken } from "./userResolver/auth"
+import { ContextInterface } from "./userResolver/ContextInterface"
 import { LoginTokens } from "./userResolver/LoginTokens"
 import { User } from "./userResolver/User"
 

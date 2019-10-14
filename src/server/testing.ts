@@ -1,11 +1,21 @@
 import { ConnectionOptions } from "typeorm"
-import { Propagation, Transactional } from "typeorm-transactional-cls-hooked"
+import {
+	initializeTransactionalContext,
+	patchTypeORMRepositoryWithBaseRepository,
+	Propagation,
+	Transactional,
+} from "typeorm-transactional-cls-hooked"
 import { connectionOptions } from "./connection"
 
 export const testingConnectionOptions = () => {
 	const database = process.env.DB_NAME_TESING as string
 
 	return { ...connectionOptions(), database } as ConnectionOptions
+}
+
+export const initializeRollbackTransactions = () => {
+	initializeTransactionalContext()
+	patchTypeORMRepositoryWithBaseRepository()
 }
 
 type RunFunction = () => Promise<void> | void
@@ -26,7 +36,7 @@ class TransactionCreator {
 	}
 }
 
-export function runInTransaction(func: RunFunction) {
+export function runInRollbackTransaction(func: RunFunction) {
 	return async () => {
 		try {
 			await TransactionCreator.run(func)

@@ -13,6 +13,9 @@ export const createServer = async (port: number) => {
 	})
 
 	const app = express()
+	app.post("/refresh_token", (_req, res) =>
+		res.send({ data: null, errors: "Invalid access token" })
+	)
 	server.applyMiddleware({ app })
 	app.listen({ port })
 
