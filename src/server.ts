@@ -1,12 +1,9 @@
 import express = require("express")
 import { ApolloServer } from "apollo-server-express"
-import { ConnectionOptions, createConnection } from "typeorm"
-import { createSchema } from "./app/schema"
-import { contextFunction } from "./app/userResolver/auth"
+import { createSchema } from "./server/schema"
+import { contextFunction } from "./server/userResolver/auth"
 
-export const bootstrap = async (connectionOptions: ConnectionOptions, port: number) => {
-	await createConnection(connectionOptions)
-
+export const createServer = async (port: number) => {
 	const server = new ApolloServer({
 		schema: await createSchema(),
 		playground: true,

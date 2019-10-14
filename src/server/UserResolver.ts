@@ -1,6 +1,6 @@
 import "reflect-metadata"
 import { Arg, Authorized, Ctx, Mutation, Query } from "type-graphql"
-import { comparePassword, MyContext, signToken } from "./userResolver/auth"
+import { comparePassword, ContextInterface, signAccessToken } from "./userResolver/auth"
 import { LoginTokens } from "./userResolver/LoginTokens"
 import { User } from "./userResolver/User"
 
@@ -22,7 +22,7 @@ export class UserResolver {
 				throw new Error()
 			}
 
-			const accessToken = signToken({ userId: user!.id })
+			const accessToken = signAccessToken({ userId: user!.id })
 
 			return {
 				accessToken,
@@ -34,7 +34,7 @@ export class UserResolver {
 
 	@Query(() => User)
 	@Authorized()
-	async me(@Ctx() { payload }: MyContext) {
+	async me(@Ctx() { payload }: ContextInterface) {
 		const id = payload!.userId
 		const user = await User.findOne({ where: { id } })
 

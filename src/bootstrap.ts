@@ -1,18 +1,10 @@
 require("dotenv").config()
-import { ConnectionOptions } from "typeorm"
-import { bootstrap } from "./app"
-import { User } from "./app/userResolver/User"
+import { createConnection } from "typeorm"
+import { createServer } from "./server"
+import { connectionOptions } from "./server/connection"
+;(async () => {
+	await createConnection(connectionOptions())
 
-let connectionOptions: ConnectionOptions = {
-	type: "postgres",
-	host: process.env.DB_HOST,
-	port: 5432,
-	database: process.env.DB_NAME,
-	username: process.env.DB_USER,
-	password: process.env.DB_PASS,
-	entities: [User],
-	synchronize: true,
-	logging: false,
-}
-
-bootstrap(connectionOptions, 4000)
+	const port = 4000
+	await createServer(port)
+})()
