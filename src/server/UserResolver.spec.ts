@@ -1,4 +1,4 @@
-import { gql } from "apollo-server"
+import { gql } from "apollo-server-express"
 import { Request, Response } from "express"
 import { createConnection, getConnection } from "typeorm"
 import { callSchema } from "./schema"
