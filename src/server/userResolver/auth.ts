@@ -2,7 +2,6 @@ import { argon2id, hash as argonHash, verify as argonVerify } from "argon2"
 import { Request, Response } from "express"
 import { sign as jwtSign, verify as jwtVerify } from "jsonwebtoken"
 import { AuthChecker } from "type-graphql"
-import { AccessToken } from "./AccessToken"
 
 export const hashPassword = async (password: string) =>
 	await argonHash(password, { type: argon2id })
@@ -44,9 +43,7 @@ export const verifiedRefreshTokenPayload = (token: string) => {
 }
 
 export const accessTokenWithRefreshCookie = (userId: number, res: Response) => {
-	const accessToken = new AccessToken()
-	accessToken.jwt = signAccessToken({ userId })
-	accessToken.jwtExpiry = parseInt(process.env.ACCESS_EXPIRY as string)
+	const accessToken = signAccessToken({ userId })
 
 	const refreshExpiryMs = parseInt(process.env.REFRESH_EXPIRY as string) * 1000
 	res.cookie("rt", signRefreshToken({ userId }), {

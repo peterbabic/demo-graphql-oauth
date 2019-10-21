@@ -7,7 +7,6 @@ import {
 	runInRollbackTransaction,
 	testingConnectionOptions,
 } from "./testing"
-import { AccessToken } from "./userResolver/AccessToken"
 import { Context, signAccessToken, verifiedAccessTokenPayload } from "./userResolver/auth"
 import { User } from "./userResolver/User"
 
@@ -72,13 +71,12 @@ describe("resolver of user", () => {
 				}).save()
 
 				const response = await callSchema(accessTokenQuery, contextWithCookie())
-				const accessToken: AccessToken = response.data!.accessToken
-				const jwtPayload = verifiedAccessTokenPayload(accessToken.jwt)
+				const accessToken: string = response.data!.accessToken
+				const jwtPayload = verifiedAccessTokenPayload(accessToken)
 				const jwtLifetime = jwtPayload.exp! - jwtPayload.iat!
 
 				expect(jwtLifetime).toBeGreaterThanOrEqual(oneMinute)
 				expect(jwtLifetime).not.toBeGreaterThan(sixteenMinutes)
-				expect(jwtLifetime).toBe(accessToken.jwtExpiry)
 				expect(jwtPayload.userId).toBe(user.id)
 				expect(response.errors).toBeUndefined()
 			})
@@ -145,10 +143,7 @@ const usersQuery = gql`
 `
 const accessTokenQuery = gql`
 	query {
-		accessToken(email: "access-token@user-resolver.com", password: "password") {
-			jwt
-			jwtExpiry
-		}
+		accessToken(email: "access-token@user-resolver.com", password: "password")
 	}
 `
 const meQuery = gql`

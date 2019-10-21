@@ -5,7 +5,6 @@ import { createConnection } from "typeorm"
 import { createServer } from "./server"
 import { gqlToString } from "./server/schema"
 import { testingConnectionOptions } from "./server/testing"
-import { AccessToken } from "./server/userResolver/AccessToken"
 import { verifiedRefreshTokenPayload } from "./server/userResolver/auth"
 import { User } from "./server/userResolver/User"
 import cookie = require("cookie")
@@ -22,7 +21,7 @@ describe("server should", () => {
 		const userId = createUserResponse.data.createUser.id
 
 		const accessTokenReponse = await rawRequest(gqlUri, gqlToString(accessTokenQuery))
-		const accessToken: AccessToken = accessTokenReponse.data.accessToken
+		const accessToken: string = accessTokenReponse.data.accessToken
 		const headers: Headers = accessTokenReponse.headers
 		const cookieHeader = headers.get("set-cookie") as string
 		const parsedCookie = cookie.parse(cookieHeader)
@@ -33,7 +32,7 @@ describe("server should", () => {
 
 		const client = new GraphQLClient(gqlUri, {
 			headers: {
-				Authorization: "Bearer " + accessToken.jwt,
+				Authorization: "Bearer " + accessToken,
 			},
 		})
 		const meResponse = await client.rawRequest(gqlToString(meQuery))
@@ -91,9 +90,7 @@ const createUserMutation = gql`
 
 const accessTokenQuery = gql`
 	query {
-		accessToken(email: "auth@server.com", password: "password") {
-			jwt
-		}
+		accessToken(email: "auth@server.com", password: "password")
 	}
 `
 
