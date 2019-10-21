@@ -13,7 +13,7 @@ export const callSchema = async (document: DocumentNode, context?: Context) => {
 
 	return graphql({
 		schema,
-		source: gqlToString(document),
+		source: gqlToStr(document),
 		contextValue: context,
 	})
 }
@@ -24,4 +24,4 @@ export const createSchema = () =>
 		authChecker: customAuthChecker,
 	})
 
-export const gqlToString = (document: DocumentNode) => document.loc!.source.body as string
+export const gqlToStr = (document: DocumentNode) => document.loc!.source.body as string

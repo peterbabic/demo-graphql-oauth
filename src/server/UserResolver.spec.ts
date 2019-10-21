@@ -25,24 +25,6 @@ describe("resolver of user", () => {
 		)
 	})
 
-	describe("users query should", () => {
-		it(
-			"return emails of registered users",
-			runInRollbackTransaction(async () => {
-				await User.create({
-					email: "users-query@user-resolver.com",
-				}).save()
-
-				const response = await callSchema(usersQuery)
-
-				expect(response.errors).toBeUndefined()
-				expect(response.data).toMatchObject({
-					users: [{ email: "users-query@user-resolver.com" }],
-				})
-			})
-		)
-	})
-
 	describe("accessToken query should", () => {
 		it(
 			"return error for bad password or not-existent user",
@@ -130,13 +112,6 @@ afterAll(async () => {
 const createUserMutation = gql`
 	mutation {
 		createUser(email: "user-mutation@user-resolver.com", password: "password") {
-			email
-		}
-	}
-`
-const usersQuery = gql`
-	query {
-		users {
 			email
 		}
 	}

@@ -1,14 +1,13 @@
 import "reflect-metadata"
 import { Arg, Authorized, Ctx, Mutation, Query } from "type-graphql"
-import { comparePasswords, Context, accessTokenWithRefreshCookie } from "./userResolver/auth"
+import {
+	accessTokenWithRefreshCookie,
+	comparePasswords,
+	Context,
+} from "./userResolver/auth"
 import { User } from "./userResolver/User"
 
 export class UserResolver {
-	@Query(() => [User])
-	async users() {
-		return await User.find()
-	}
-
 	@Query(() => String)
 	async accessToken(
 		@Arg("email") email: string,

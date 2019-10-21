@@ -3,7 +3,7 @@ import { GraphQLClient, rawRequest } from "graphql-request"
 import fetch from "node-fetch"
 import { createConnection } from "typeorm"
 import { createServer } from "./server"
-import { gqlToString } from "./server/schema"
+import { gqlToStr } from "./server/schema"
 import { testingConnectionOptions } from "./server/testing"
 import { verifiedRefreshTokenPayload } from "./server/userResolver/auth"
 import { User } from "./server/userResolver/User"
@@ -14,13 +14,10 @@ describe("server should", () => {
 		const halfADay = (60 * 60 * 24) / 2
 		const fifteenDays = 60 * 60 * 24 * 15
 
-		const createUserResponse = await rawRequest(
-			gqlUri,
-			gqlToString(createUserMutation)
-		)
+		const createUserResponse = await rawRequest(gqlUri, gqlToStr(createUserMutation))
 		const userId = createUserResponse.data.createUser.id
 
-		const accessTokenReponse = await rawRequest(gqlUri, gqlToString(accessTokenQuery))
+		const accessTokenReponse = await rawRequest(gqlUri, gqlToStr(accessTokenQuery))
 		const accessToken: string = accessTokenReponse.data.accessToken
 		const headers: Headers = accessTokenReponse.headers
 		const cookieHeader = headers.get("set-cookie") as string
@@ -35,7 +32,7 @@ describe("server should", () => {
 				Authorization: "Bearer " + accessToken,
 			},
 		})
-		const meResponse = await client.rawRequest(gqlToString(meQuery))
+		const meResponse = await client.rawRequest(gqlToStr(meQuery))
 
 		const refreshTokenResponse = await fetch(refreshTokenUri, {
 			method: "POST",
