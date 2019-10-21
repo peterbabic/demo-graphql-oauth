@@ -2,7 +2,10 @@ import "reflect-metadata"
 import { Field, ObjectType } from "type-graphql"
 
 @ObjectType()
-export class LoginTokens {
+export class AccessToken {
 	@Field()
-	accessToken: string = ""
+	jwt: string = ""
+
+	@Field()
+	jwtExpiry: number = 0
 }

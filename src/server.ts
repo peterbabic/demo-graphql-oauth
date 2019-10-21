@@ -1,7 +1,12 @@
 import express = require("express")
 import { ApolloServer } from "apollo-server-express"
 import { createSchema } from "./server/schema"
-import { contextFunction } from "./server/userResolver/auth"
+import {
+	contextFunction,
+	refreshTokens,
+	verifiedRefreshTokenPayload,
+} from "./server/userResolver/auth"
+import cookie = require("cookie")
 
 export const createServer = async (port: number) => {
 	const server = new ApolloServer({
@@ -13,9 +18,16 @@ export const createServer = async (port: number) => {
 	})
 
 	const app = express()
-	app.post("/refresh_token", (_req, res) =>
-		res.send({ data: null, errors: "Invalid access token" })
-	)
+	app.post("/refresh_token", (req, res) => {
+		try {
+			const parsedCookie = cookie.parse(req.headers.cookie!)
+			const refreshTokenPayload = verifiedRefreshTokenPayload(parsedCookie.rt)
+			const accessToken = refreshTokens(refreshTokenPayload.userId, res)
+			res.json({ data: accessToken })
+		} catch (error) {
+			res.json({ data: null, errors: "Refresh failed: " + error })
+		}
+	})
 	server.applyMiddleware({ app })
 	app.listen({ port })
 

@@ -7,9 +7,8 @@ import {
 	runInRollbackTransaction,
 	testingConnectionOptions,
 } from "./testing"
-import { signAccessToken, verifyAccessToken } from "./userResolver/auth"
-import { ContextInterface } from "./userResolver/ContextInterface"
-import { LoginTokens } from "./userResolver/LoginTokens"
+import { AccessToken } from "./userResolver/AccessToken"
+import { Context, signAccessToken, verifiedAccessTokenPayload } from "./userResolver/auth"
 import { User } from "./userResolver/User"
 
 beforeAll(async () => {
@@ -28,7 +27,10 @@ describe("resolver of user", () => {
 			runInRollbackTransaction(async () => {
 				const createUserMutation = gql`
 					mutation {
-						createUser(email: "email@email.com", password: "password") {
+						createUser(
+							email: "user-mutation@user-resolver.com"
+							password: "password"
+						) {
 							email
 						}
 					}
@@ -38,7 +40,7 @@ describe("resolver of user", () => {
 
 				expect(response.errors).toBeUndefined()
 				expect(response.data).toMatchObject({
-					createUser: { email: "email@email.com" },
+					createUser: { email: "user-mutation@user-resolver.com" },
 				})
 			})
 		)
@@ -56,48 +58,42 @@ describe("resolver of user", () => {
 					}
 				`
 
-				const user = await User.create({
-					email: "email@email.com",
+				await User.create({
+					email: "users-query@user-resolver.com",
 				}).save()
 
 				const response = await callSchema(usersQuery)
 
 				expect(response.errors).toBeUndefined()
 				expect(response.data).toMatchObject({
-					users: [{ email: user.email }],
+					users: [{ email: "users-query@user-resolver.com" }],
 				})
 			})
 		)
 	})
 
-	describe("loginTokens query should", () => {
-		const loginTokensQuery = gql`
+	describe("accessToken query should", () => {
+		const accessTokenQuery = gql`
 			query {
-				loginTokens(email: "email@email.com", password: "good-password") {
-					accessToken
+				accessToken(
+					email: "access-token@user-resolver.com"
+					password: "password"
+				) {
+					jwt
+					jwtExpiry
 				}
 			}
 		`
 
 		it(
-			"return error for non-existent user",
-			runInRollbackTransaction(async () => {
-				const response = await callSchema(loginTokensQuery)
-
-				expect(response.errors).not.toBeUndefined()
-				expect(response.data).toBeNull()
-			})
-		)
-
-		it(
-			"return error for bad password",
+			"return error for bad password or not-existent user",
 			runInRollbackTransaction(async () => {
 				await User.create({
-					email: "email@email.com",
+					email: "access-token@user-resolver.com",
 					password: "BAD-password",
 				}).save()
 
-				const response = await callSchema(loginTokensQuery)
+				const response = await callSchema(accessTokenQuery, contextWithCookie())
 
 				expect(response.errors).not.toBeUndefined()
 				expect(response.data).toBeNull()
@@ -105,26 +101,26 @@ describe("resolver of user", () => {
 		)
 
 		it(
-			"return a valid access token with good credentials",
+			"return a valid access token with expiry providing good credentials",
 			runInRollbackTransaction(async () => {
-				await User.create({
-					email: "email@email.com",
-					password: "good-password",
+				const oneMinute = 60
+				const sixteenMinutes = 60 * 16
+
+				const user = await User.create({
+					email: "access-token@user-resolver.com",
+					password: "password",
 				}).save()
 
-				const response = await callSchema(loginTokensQuery)
-				const accessToken = response.data!.loginTokens.accessToken
-				const accessTokenPayload = verifyAccessToken(accessToken)
-				const loginTokens = new LoginTokens()
-				loginTokens.accessToken = accessToken
+				const response = await callSchema(accessTokenQuery, contextWithCookie())
+				const accessToken: AccessToken = response.data!.accessToken
+				const jwtPayload = verifiedAccessTokenPayload(accessToken.jwt)
+				const jwtLifetime = jwtPayload.exp! - jwtPayload.iat!
 
-				const fifteenMinutes = 900
-				const accessTokenLifetime =
-					accessTokenPayload.exp! - accessTokenPayload.iat!
-				expect(accessTokenLifetime).toBe(fifteenMinutes)
-				expect(accessTokenPayload).toBeTruthy()
+				expect(jwtLifetime).toBeGreaterThanOrEqual(oneMinute)
+				expect(jwtLifetime).not.toBeGreaterThan(sixteenMinutes)
+				expect(jwtLifetime).toBe(accessToken.jwtExpiry)
+				expect(jwtPayload.userId).toBe(user.id)
 				expect(response.errors).toBeUndefined()
-				expect(response.data).toMatchObject({ loginTokens })
 			})
 		)
 	})
@@ -139,7 +135,7 @@ describe("resolver of user", () => {
 		`
 
 		it(
-			"return an error without a valid jwt token",
+			"return an error without a valid access token",
 			runInRollbackTransaction(async () => {
 				const contextWithInvalidToken = contextWithAuthHeader(
 					"Bearer INVALID-TOKEN"
@@ -152,10 +148,10 @@ describe("resolver of user", () => {
 		)
 
 		it(
-			"return an user with a valid jwt token",
+			"return an user with a valid access token",
 			runInRollbackTransaction(async () => {
 				const user = await User.create({
-					email: "email@email.com",
+					email: "me-query@user-resolver.com",
 				}).save()
 
 				const contextWithValidToken = contextWithAuthHeader(
@@ -165,18 +161,23 @@ describe("resolver of user", () => {
 
 				expect(response.errors).toBeUndefined()
 				expect(response.data).toMatchObject({
-					me: { email: user.email },
+					me: { email: "me-query@user-resolver.com" },
 				})
 			})
 		)
 	})
 })
 
-const contextWithAuthHeader = (header: string): ContextInterface => ({
+const contextWithAuthHeader = (header: string): Context => ({
 	req: {
 		headers: {
 			authorization: header,
 		},
 	} as Request,
 	res: {} as Response,
+})
+
+const contextWithCookie = (): Context => ({
+	req: {} as Request,
+	res: ({ cookie: () => undefined } as unknown) as Response,
 })

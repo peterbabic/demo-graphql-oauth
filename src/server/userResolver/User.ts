@@ -6,6 +6,7 @@ import { hashPassword } from "./auth"
 @ObjectType()
 @Entity()
 export class User extends BaseEntity {
+	@Field()
 	@PrimaryGeneratedColumn()
 	id!: number
 

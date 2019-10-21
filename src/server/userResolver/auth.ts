@@ -1,13 +1,20 @@
 import { argon2id, hash, verify as argonVerify } from "argon2"
+import { Request, Response } from "express"
 import { sign, verify as jwtVerify } from "jsonwebtoken"
 import { AuthChecker } from "type-graphql"
-import { ContextInterface } from "./ContextInterface"
+import { AccessToken } from "./AccessToken"
 
-export type ContextPayload = {
+export type Context = {
+	req: Request
+	res: Response
+	payload?: ContextPayload
+}
+
+type ContextPayload = {
 	userId: number
 }
 
-type AccessTokenPayload = {
+type JWTPayload = {
 	userId: number
 	iat: number
 	exp?: number
@@ -23,21 +30,50 @@ export const signAccessToken = (payload: ContextPayload) => {
 	const accessTokenSecret = process.env.ACCESS_SECRET as string
 
 	return sign(payload, accessTokenSecret, {
-		expiresIn: process.env.ACCESS_EXP,
+		expiresIn: parseInt(process.env.ACCESS_EXPIRY as string),
 	})
 }
 
-export const verifyAccessToken = (token: string) => {
-	const accessTokenSecret = process.env.ACCESS_SECRET as string
+export const signRefreshToken = (payload: ContextPayload) => {
+	const accessTokenSecret = process.env.REFRESH_SECRET as string
 
-	return jwtVerify(token, accessTokenSecret) as AccessTokenPayload
+	return sign(payload, accessTokenSecret, {
+		expiresIn: parseInt(process.env.REFRESH_EXPIRY as string),
+	})
 }
 
-export const customAuthChecker: AuthChecker<ContextInterface> = ({ context }) => {
+export const verifiedAccessTokenPayload = (token: string) => {
+	const accessTokenSecret = process.env.ACCESS_SECRET as string
+
+	return jwtVerify(token, accessTokenSecret) as JWTPayload
+}
+
+export const verifiedRefreshTokenPayload = (token: string) => {
+	const refreshTokenSecret = process.env.REFRESH_SECRET as string
+
+	return jwtVerify(token, refreshTokenSecret) as JWTPayload
+}
+
+export const refreshTokens = (userId: number, res: Response) => {
+	const accessToken = new AccessToken()
+	accessToken.jwt = signAccessToken({ userId })
+	accessToken.jwtExpiry = parseInt(process.env.ACCESS_EXPIRY as string)
+
+	const refreshExpiryMs = parseInt(process.env.REFRESH_EXPIRY as string) * 1000
+	res.cookie("rt", signRefreshToken({ userId }), {
+		httpOnly: true,
+		path: "/refresh_token",
+		expires: new Date(new Date().getTime() + refreshExpiryMs),
+	})
+
+	return accessToken
+}
+
+export const customAuthChecker: AuthChecker<Context> = ({ context }) => {
 	try {
 		const authHeader = context.req.headers["authorization"]
 		const accessToken = authHeader!.split(" ")[1]
-		const accessTokenPayload = verifyAccessToken(accessToken)
+		const accessTokenPayload = verifiedAccessTokenPayload(accessToken)
 		context.payload = accessTokenPayload as ContextPayload
 
 		return true
@@ -46,4 +82,4 @@ export const customAuthChecker: AuthChecker<ContextInterface> = ({ context }) =>
 	}
 }
 
-export const contextFunction = ({ req, res }: ContextInterface) => ({ req, res })
+export const contextFunction = ({ req, res }: Context) => ({ req, res })
