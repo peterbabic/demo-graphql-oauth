@@ -1,7 +1,7 @@
 import "reflect-metadata"
 import { Arg, Authorized, Ctx, Mutation, Query } from "type-graphql"
 import { AccessToken } from "./userResolver/AccessToken"
-import { comparePassword, Context, refreshTokens } from "./userResolver/auth"
+import { comparePasswords, Context, accessTokenWithRefreshCookie } from "./userResolver/auth"
 import { User } from "./userResolver/User"
 
 export class UserResolver {
@@ -18,12 +18,9 @@ export class UserResolver {
 	) {
 		try {
 			const user = await User.findOne({ where: { email } })
+			await comparePasswords(user!.password, password)
 
-			if (!(await comparePassword(user!.password, password))) {
-				throw new Error()
-			}
-
-			return refreshTokens(user!.id, res)
+			return accessTokenWithRefreshCookie(user!.id, res)
 		} catch (error) {
 			throw new Error("Login credentials are invalid: " + error)
 		}

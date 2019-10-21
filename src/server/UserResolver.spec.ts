@@ -11,31 +11,11 @@ import { AccessToken } from "./userResolver/AccessToken"
 import { Context, signAccessToken, verifiedAccessTokenPayload } from "./userResolver/auth"
 import { User } from "./userResolver/User"
 
-beforeAll(async () => {
-	initializeRollbackTransactions()
-	await createConnection(testingConnectionOptions())
-})
-
-afterAll(async () => {
-	await getConnection().close()
-})
-
 describe("resolver of user", () => {
 	describe("createUser mutation should", () => {
 		it(
 			"return email as it creates user with mutation",
 			runInRollbackTransaction(async () => {
-				const createUserMutation = gql`
-					mutation {
-						createUser(
-							email: "user-mutation@user-resolver.com"
-							password: "password"
-						) {
-							email
-						}
-					}
-				`
-
 				const response = await callSchema(createUserMutation)
 
 				expect(response.errors).toBeUndefined()
@@ -50,14 +30,6 @@ describe("resolver of user", () => {
 		it(
 			"return emails of registered users",
 			runInRollbackTransaction(async () => {
-				const usersQuery = gql`
-					query {
-						users {
-							email
-						}
-					}
-				`
-
 				await User.create({
 					email: "users-query@user-resolver.com",
 				}).save()
@@ -73,18 +45,6 @@ describe("resolver of user", () => {
 	})
 
 	describe("accessToken query should", () => {
-		const accessTokenQuery = gql`
-			query {
-				accessToken(
-					email: "access-token@user-resolver.com"
-					password: "password"
-				) {
-					jwt
-					jwtExpiry
-				}
-			}
-		`
-
 		it(
 			"return error for bad password or not-existent user",
 			runInRollbackTransaction(async () => {
@@ -126,14 +86,6 @@ describe("resolver of user", () => {
 	})
 
 	describe("me query should", () => {
-		const meQuery = gql`
-			query {
-				me {
-					email
-				}
-			}
-		`
-
 		it(
 			"return an error without a valid access token",
 			runInRollbackTransaction(async () => {
@@ -167,6 +119,45 @@ describe("resolver of user", () => {
 		)
 	})
 })
+
+beforeAll(async () => {
+	initializeRollbackTransactions()
+	await createConnection(testingConnectionOptions())
+})
+
+afterAll(async () => {
+	await getConnection().close()
+})
+
+const createUserMutation = gql`
+	mutation {
+		createUser(email: "user-mutation@user-resolver.com", password: "password") {
+			email
+		}
+	}
+`
+const usersQuery = gql`
+	query {
+		users {
+			email
+		}
+	}
+`
+const accessTokenQuery = gql`
+	query {
+		accessToken(email: "access-token@user-resolver.com", password: "password") {
+			jwt
+			jwtExpiry
+		}
+	}
+`
+const meQuery = gql`
+	query {
+		me {
+			email
+		}
+	}
+`
 
 const contextWithAuthHeader = (header: string): Context => ({
 	req: {

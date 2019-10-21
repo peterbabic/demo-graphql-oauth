@@ -38,11 +38,11 @@ describe("server should", () => {
 		})
 		const meResponse = await client.rawRequest(gqlToString(meQuery))
 
-		const response = await fetch(refreshTokenUri, {
+		const refreshTokenResponse = await fetch(refreshTokenUri, {
 			method: "POST",
 			headers: { cookie: cookieHeader },
 		})
-		const jsonResponse = await response.json()
+		const jsonResponse = await refreshTokenResponse.json()
 
 		expect(cookieHeader).toMatch(/HttpOnly/)
 		expect(parsedCookie.Path).toBe("/refresh_token")

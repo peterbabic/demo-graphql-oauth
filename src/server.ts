@@ -2,8 +2,8 @@ import express = require("express")
 import { ApolloServer } from "apollo-server-express"
 import { createSchema } from "./server/schema"
 import {
+	accessTokenWithRefreshCookie,
 	contextFunction,
-	refreshTokens,
 	verifiedRefreshTokenPayload,
 } from "./server/userResolver/auth"
 import cookie = require("cookie")
@@ -21,8 +21,8 @@ export const createServer = async (port: number) => {
 	app.post("/refresh_token", (req, res) => {
 		try {
 			const parsedCookie = cookie.parse(req.headers.cookie!)
-			const refreshTokenPayload = verifiedRefreshTokenPayload(parsedCookie.rt)
-			const accessToken = refreshTokens(refreshTokenPayload.userId, res)
+			const refreshPayload = verifiedRefreshTokenPayload(parsedCookie.rt)
+			const accessToken = accessTokenWithRefreshCookie(refreshPayload.userId, res)
 			res.json({ data: accessToken })
 		} catch (error) {
 			res.json({ data: null, errors: "Refresh failed: " + error })

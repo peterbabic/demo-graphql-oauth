@@ -1,35 +1,24 @@
-import { argon2id, hash, verify as argonVerify } from "argon2"
+import { argon2id, hash as argonHash, verify as argonVerify } from "argon2"
 import { Request, Response } from "express"
-import { sign, verify as jwtVerify } from "jsonwebtoken"
+import { sign as jwtSign, verify as jwtVerify } from "jsonwebtoken"
 import { AuthChecker } from "type-graphql"
 import { AccessToken } from "./AccessToken"
 
-export type Context = {
-	req: Request
-	res: Response
-	payload?: ContextPayload
-}
-
-type ContextPayload = {
-	userId: number
-}
-
-type JWTPayload = {
-	userId: number
-	iat: number
-	exp?: number
-}
-
 export const hashPassword = async (password: string) =>
-	await hash(password, { type: argon2id })
+	await argonHash(password, { type: argon2id })
 
-export const comparePassword = async (hash: string, plain: string) =>
-	await argonVerify(hash, plain, { type: argon2id })
+export const comparePasswords = async (hash: string, plain: string) => {
+	if (!(await argonVerify(hash, plain, { type: argon2id }))) {
+		throw new Error("Passwords do not match")
+	}
+
+	return true
+}
 
 export const signAccessToken = (payload: ContextPayload) => {
 	const accessTokenSecret = process.env.ACCESS_SECRET as string
 
-	return sign(payload, accessTokenSecret, {
+	return jwtSign(payload, accessTokenSecret, {
 		expiresIn: parseInt(process.env.ACCESS_EXPIRY as string),
 	})
 }
@@ -37,7 +26,7 @@ export const signAccessToken = (payload: ContextPayload) => {
 export const signRefreshToken = (payload: ContextPayload) => {
 	const accessTokenSecret = process.env.REFRESH_SECRET as string
 
-	return sign(payload, accessTokenSecret, {
+	return jwtSign(payload, accessTokenSecret, {
 		expiresIn: parseInt(process.env.REFRESH_EXPIRY as string),
 	})
 }
@@ -54,7 +43,7 @@ export const verifiedRefreshTokenPayload = (token: string) => {
 	return jwtVerify(token, refreshTokenSecret) as JWTPayload
 }
 
-export const refreshTokens = (userId: number, res: Response) => {
+export const accessTokenWithRefreshCookie = (userId: number, res: Response) => {
 	const accessToken = new AccessToken()
 	accessToken.jwt = signAccessToken({ userId })
 	accessToken.jwtExpiry = parseInt(process.env.ACCESS_EXPIRY as string)
@@ -83,3 +72,19 @@ export const customAuthChecker: AuthChecker<Context> = ({ context }) => {
 }
 
 export const contextFunction = ({ req, res }: Context) => ({ req, res })
+
+export type Context = {
+	req: Request
+	res: Response
+	payload?: ContextPayload
+}
+
+type ContextPayload = {
+	userId: number
+}
+
+type JWTPayload = {
+	userId: number
+	iat: number
+	exp?: number
+}
