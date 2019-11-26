@@ -60,6 +60,7 @@ describe("resolver of user", () => {
 				expect(jwtLifetime).toBeGreaterThanOrEqual(oneMinute)
 				expect(jwtLifetime).not.toBeGreaterThan(sixteenMinutes)
 				expect(jwtPayload.userId).toBe(user.id)
+				expect(jwtPayload.ms).toBeLessThan(1000)
 				expect(response.errors).toBeUndefined()
 			})
 		)
