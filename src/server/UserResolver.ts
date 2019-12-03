@@ -1,43 +1,55 @@
 import "reflect-metadata"
 import { Arg, Authorized, Ctx, Mutation, Query } from "type-graphql"
 import {
-	accessTokenWithRefreshCookie,
-	comparePasswords,
-	Context,
+    accessTokenWithRefreshCookie,
+    comparePasswords,
+    Context,
+    createRtCookie,
 } from "./userResolver/auth"
 import { User } from "./userResolver/User"
 
 export class UserResolver {
-	@Query(() => String)
-	async accessToken(
-		@Arg("email") email: string,
-		@Arg("password") password: string,
-		@Ctx() { res }: Context
-	) {
-		try {
-			const user = await User.findOne({ where: { email } })
-			await comparePasswords(user!.password, password)
+    @Query(() => String)
+    async query() {
+        return ""
+    }
 
-			return accessTokenWithRefreshCookie(user!.id, res)
-		} catch (error) {
-			throw new Error("Login credentials are invalid: " + error)
-		}
-	}
+    @Mutation(() => User)
+    async createUser(@Arg("email") email: string, @Arg("password") password: string) {
+        return await User.create({
+            email,
+            password,
+        }).save()
+    }
 
-	@Query(() => User)
-	@Authorized()
-	async me(@Ctx() { payload }: Context) {
-		const id = payload!.userId
-		const user = await User.findOne({ where: { id } })
+    @Mutation(() => String)
+    async accessToken(
+        @Arg("email") email: string,
+        @Arg("password") password: string,
+        @Ctx() { res }: Context
+    ) {
+        try {
+            const user = await User.findOne({ where: { email } })
+            await comparePasswords(user!.password, password)
 
-		return user
-	}
+            return accessTokenWithRefreshCookie(user!.id, user!.tokenVersion, res)
+        } catch (error) {
+            throw new Error("Login credentials are invalid: " + error)
+        }
+    }
 
-	@Mutation(() => User)
-	async createUser(@Arg("email") email: string, @Arg("password") password: string) {
-		return await User.create({
-			email,
-			password,
-		}).save()
-	}
+    @Mutation(() => User)
+    @Authorized()
+    async me(@Ctx() { payload }: Context) {
+        return await User.findOne({
+            where: { id: payload!.uid },
+        })
+    }
+
+    @Mutation(() => Boolean)
+    async signOut(@Ctx() { res }: Context) {
+        createRtCookie(res, "")
+
+        return true
+    }
 }

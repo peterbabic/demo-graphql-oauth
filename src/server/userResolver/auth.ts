@@ -16,17 +16,18 @@ export const comparePasswords = async (hash: string, plain: string) => {
 
 export const signAccessToken = (payload: ContextPayload) => {
     const accessTokenSecret = process.env.ACCESS_SECRET as string
-    const payloadWithMs = { ...payload, ms: Date.now() % 1000 }
+    const tokenPayload: TokenPayload = { ...payload, msc: Date.now() % 1000 }
 
-    return jwtSign(payloadWithMs, accessTokenSecret, {
+    return jwtSign(tokenPayload, accessTokenSecret, {
         expiresIn: parseInt(process.env.ACCESS_EXPIRY as string),
     })
 }
 
 export const signRefreshToken = (payload: ContextPayload) => {
-    const accessTokenSecret = process.env.REFRESH_SECRET as string
+    const refreshTokenSecret = process.env.REFRESH_SECRET as string
+    const tokenPayload: TokenPayload = { ...payload, msc: Date.now() % 1000 }
 
-    return jwtSign(payload, accessTokenSecret, {
+    return jwtSign(tokenPayload, refreshTokenSecret, {
         expiresIn: parseInt(process.env.REFRESH_EXPIRY as string),
     })
 }
@@ -34,26 +35,32 @@ export const signRefreshToken = (payload: ContextPayload) => {
 export const verifiedAccessTokenPayload = (token: string) => {
     const accessTokenSecret = process.env.ACCESS_SECRET as string
 
-    return jwtVerify(token, accessTokenSecret) as JWTPayload
+    return jwtVerify(token, accessTokenSecret) as TokenPayload
 }
 
 export const verifiedRefreshTokenPayload = (token: string) => {
     const refreshTokenSecret = process.env.REFRESH_SECRET as string
-
-    return jwtVerify(token, refreshTokenSecret) as JWTPayload
+    return jwtVerify(token, refreshTokenSecret) as TokenPayload
 }
 
-export const accessTokenWithRefreshCookie = (userId: number, res: Response) => {
-    const accessToken = signAccessToken({ userId })
+export const accessTokenWithRefreshCookie = (uid: number, ver: number, res: Response) => {
+    const refreshToken = signRefreshToken({ uid, ver })
+    createRtCookie(res, refreshToken)
 
+    return signAccessToken({ uid })
+}
+
+export const createRtCookie = (res: Response, token: string) =>
+    res.cookie("rt", token, rtCookieOptions())
+
+export const rtCookieOptions = () => {
     const refreshExpiryMs = parseInt(process.env.REFRESH_EXPIRY as string) * 1000
-    res.cookie("rt", signRefreshToken({ userId }), {
+
+    return {
         httpOnly: true,
         path: "/refresh_token",
         expires: new Date(new Date().getTime() + refreshExpiryMs),
-    })
-
-    return accessToken
+    }
 }
 
 export const customAuthChecker: AuthChecker<Context> = ({ context }) => {
@@ -61,6 +68,7 @@ export const customAuthChecker: AuthChecker<Context> = ({ context }) => {
         const authHeader = context.req.headers["authorization"]
         const accessToken = authHeader!.split(" ")[1]
         const accessTokenPayload = verifiedAccessTokenPayload(accessToken)
+
         context.payload = accessTokenPayload as ContextPayload
 
         return true
@@ -78,12 +86,12 @@ export type Context = {
 }
 
 type ContextPayload = {
-    userId: number
+    uid: number
+    ver?: number
 }
 
-type JWTPayload = {
-    userId: number
-    iat: number
+type TokenPayload = ContextPayload & {
+    msc: number
+    iat?: number
     exp?: number
-    ms?: number
 }

@@ -6,19 +6,27 @@ import { hashPassword } from "./auth"
 @ObjectType()
 @Entity()
 export class User extends BaseEntity {
-	@Field()
-	@PrimaryGeneratedColumn()
-	id!: number
+    @Field()
+    @PrimaryGeneratedColumn()
+    id!: number
 
-	@Field()
-	@Column()
-	email: string = ""
+    @Field()
+    @Column()
+    email: string = ""
 
-	@Column()
-	password: string = ""
+    @Column()
+    password: string = ""
 
-	@BeforeInsert()
-	async hashPassword() {
-		this.password = await hashPassword(this.password)
-	}
+    @Column()
+    tokenVersion: number = 0
+
+    @BeforeInsert()
+    async hashPassword() {
+        this.password = await hashPassword(this.password)
+    }
+
+    async invalidateTokens() {
+        this.tokenVersion += 1
+        await this.save()
+    }
 }

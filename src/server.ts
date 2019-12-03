@@ -6,6 +6,7 @@ import {
     contextFunction,
     verifiedRefreshTokenPayload,
 } from "./server/userResolver/auth"
+import { User } from "./server/userResolver/User"
 import cookie = require("cookie")
 import cors = require("cors")
 
@@ -26,11 +27,20 @@ export const createServer = async (port: number) => {
         })
     )
 
-    app.post("/refresh_token", (req, res) => {
+    app.post("/refresh_token", async (req, res) => {
         try {
             const parsedCookie = cookie.parse(req.headers.cookie!)
-            const refreshPayload = verifiedRefreshTokenPayload(parsedCookie.rt)
-            const accessToken = accessTokenWithRefreshCookie(refreshPayload.userId, res)
+            const rtPayload = verifiedRefreshTokenPayload(parsedCookie.rt)
+
+            await User.findOneOrFail({
+                where: { id: rtPayload.uid, tokenVersion: rtPayload.ver },
+            })
+
+            const accessToken = accessTokenWithRefreshCookie(
+                rtPayload.uid,
+                rtPayload.ver!,
+                res
+            )
 
             res.json({ data: accessToken })
         } catch (error) {
