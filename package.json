@@ -39,6 +39,6 @@
 		"ts-jest": "^24.1.0",
 		"ts-node-dev": "^1.0.0-pre.42",
 		"typeorm-transactional-cls-hooked": "^0.1.8",
-		"typescript": "^3.6.3"
+		"typescript": "^3.7.3"
 	}
 }
