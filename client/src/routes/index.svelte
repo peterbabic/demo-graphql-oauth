@@ -1,20 +1,35 @@
-<svelte:head>
-    <title>Sapper project template</title>
-</svelte:head>
+<script>
+    import { onMount } from "svelte"
+    let dz
 
-<p>
-    <strong>
-        Try editing this file (src/routes/index.svelte) to test live reloading.
-    </strong>
-</p>
+    onMount(async () => {
+        const dropzone = await import("dropzone")
+        dz = new dropzone.default("div#dropzone", {
+            url: "http://localhost:4000/graphql",
+            autoProcessQueue: true,
+        })
+
+        dz.on("sending", (file, xhr, data) => {
+            data.append(
+                "operations",
+                `{ "query": "mutation ($file: Upload!) { uploadFigure(file: $file)}", "variables": { "file": null } }`
+            )
+            data.append("map", `{ "file": ["variables.file"] }`)
+        })
+    })
+</script>
+
+<div id="dropzone" class="dropzone" cy="dropzone" />
 
 <style>
-    p {
-        text-align: center;
-        margin: 0 auto;
-    }
-
-    p {
-        margin: 1em auto;
+    .dropzone {
+        height: 300px;
+        background: #fdfdfd;
+        border-radius: 5px;
+        border: 2px dashed #ff3e00;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 300ms ease-out;
     }
 </style>
