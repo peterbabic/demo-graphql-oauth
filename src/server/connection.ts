@@ -1,5 +1,5 @@
 import { ConnectionOptions } from "typeorm"
-import { User } from "./userResolver/User"
+import { User } from "./UserResolver/User"
 
 export const connectionOptions = (): ConnectionOptions => ({
 	type: "postgres",

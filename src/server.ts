@@ -5,8 +5,8 @@ import {
     accessTokenWithRefreshCookie,
     contextFunction,
     verifiedRefreshTokenPayload,
-} from "./server/userResolver/auth"
-import { User } from "./server/userResolver/User"
+} from "./server/UserResolver/auth"
+import { User } from "./server/UserResolver/User"
 import cookie = require("cookie")
 import cors = require("cors")
 

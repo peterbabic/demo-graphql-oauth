@@ -1,14 +1,15 @@
 import { gql } from "apollo-server-express"
-import { Request, Response } from "express"
 import { createConnection, getConnection } from "typeorm"
 import { callSchema } from "./schema"
 import {
+    contextWithAuthHeader,
+    contextWithCookie,
     initializeRollbackTransactions,
     runInRollbackTransaction,
     testingConnectionOptions,
 } from "./testing"
-import { Context, signAccessToken, verifiedAccessTokenPayload } from "./userResolver/auth"
-import { User } from "./userResolver/User"
+import { signAccessToken, verifiedAccessTokenPayload } from "./UserResolver/auth"
+import { User } from "./UserResolver/User"
 
 describe("resolver of user", () => {
     describe("createUser mutation should", () => {
@@ -161,17 +162,3 @@ const signOutMutation = gql`
         signOut
     }
 `
-
-const contextWithAuthHeader = (header: string): Context => ({
-    req: {
-        headers: {
-            authorization: header,
-        },
-    } as Request,
-    res: {} as Response,
-})
-
-const contextWithCookie = (): Context => ({
-    req: {} as Request,
-    res: ({ cookie: () => undefined } as unknown) as Response,
-})

@@ -5,10 +5,11 @@ import {
     comparePasswords,
     Context,
     createRtCookie,
-} from "./userResolver/auth"
-import { User } from "./userResolver/User"
+} from "./UserResolver/auth"
+import { User } from "./UserResolver/User"
 
 export class UserResolver {
+    // TODO: remove when other query gets itroduced
     @Query(() => String)
     async query() {
         return ""

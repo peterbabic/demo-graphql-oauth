@@ -1,18 +1,22 @@
-// TODO: convert to import
 import cookie = require("cookie")
 import { gql } from "apollo-server-express"
 import { GraphQLClient, rawRequest } from "graphql-request"
 import fetch from "node-fetch"
 import { createConnection } from "typeorm"
-import { createServer } from "./server"
-import { gqlToStr } from "./server/schema"
-import { testingConnectionOptions } from "./server/testing"
+import { createServer } from "../server"
+import { gqlToStr } from "../server/schema"
+import {
+    gqlUri,
+    refreshTokenUri,
+    testingConnectionOptions,
+    testingPort,
+} from "../server/testing"
 import {
     rtCookieOptions,
     signRefreshToken,
     verifiedRefreshTokenPayload,
-} from "./server/userResolver/auth"
-import { User } from "./server/userResolver/User"
+} from "../server/UserResolver/auth"
+import { User } from "../server/UserResolver/User"
 
 let user: User
 
@@ -107,7 +111,7 @@ describe("server should", () => {
 
 beforeAll(async () => {
     await createConnection(testingConnectionOptions())
-    await createServer(port)
+    await createServer(testingPort)
 
     await User.delete({ email: "auth@server.com" })
     user = await User.create({ email: "auth@server.com", password: "password" }).save()
@@ -116,10 +120,6 @@ beforeAll(async () => {
 afterAll(async () => {
     await User.delete({ email: "auth@server.com" })
 })
-
-const port = 4001
-const gqlUri = `http://localhost:${port}/graphql`
-const refreshTokenUri = `http://localhost:${port}/refresh_token`
 
 const accessTokenMutation = gql`
     mutation {
